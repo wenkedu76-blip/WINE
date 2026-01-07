@@ -2,9 +2,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { WineAnalysis } from "../types";
 
+// 延迟初始化 AI 实例，确保在调用时才读取环境变量
 const getAI = () => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY_NOT_CONFIGURED");
+  if (!apiKey) {
+    throw new Error("API_KEY_NOT_FOUND: 请确保系统环境变量中已配置 API_KEY。");
+  }
   return new GoogleGenAI({ apiKey });
 };
 
@@ -40,7 +43,7 @@ export const analyzeWineLabel = async (base64Image: string): Promise<{ data: Win
       {
         parts: [
           { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
-          { text: "Identify this wine label accurately. Use Google Search to find professional tasting notes and details. Respond in Chinese." }
+          { text: "请精准识别这张酒标。利用 Google Search 查找其专业品酒笔记、酒庄背景和产区详细信息。请用中文回答。" }
         ]
       }
     ],
@@ -58,7 +61,7 @@ export const researchWineInfo = async (query: string): Promise<{ data: WineAnaly
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Conduct deep research for this wine: "${query}". Identify winery, region, varietal, and provide professional tasting notes in Chinese.`,
+    contents: `请对这款酒进行深度研究: "${query}"。识别其酒庄、产区、葡萄品种，并提供专业的中文品酒笔记。`,
     config: {
       responseMimeType: "application/json",
       responseSchema: WINE_SCHEMA,
