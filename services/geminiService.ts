@@ -2,11 +2,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { WineAnalysis } from "../types";
 
-// 只有在 API_KEY 存在时才初始化，否则在调用时再检查，防止初始化白屏
+// 延迟初始化，防止在模块加载阶段因为环境变量缺失而崩溃
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("API_KEY_MISSING");
+    // 抛出一个特定的错误，稍后在 UI 层捕获
+    throw new Error("API_KEY_NOT_CONFIGURED");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -57,8 +58,11 @@ export const analyzeWineLabel = async (base64Image: string): Promise<{ data: Win
 
     return { data: JSON.parse(response.text || '{}') };
   } catch (error: any) {
-    if (error.message === "API_KEY_MISSING") {
-      throw new Error("请先在 Vercel 环境变量中设置 API_KEY");
+    console.error("Wine Analysis Error:", error);
+    if (error.message === "API_KEY_NOT_CONFIGURED") {
+      alert("配置错误：请在 Vercel 后台添加 API_KEY 环境变量并重新部署。");
+    } else {
+      alert("分析失败，请稍后重试。");
     }
     throw error;
   }
@@ -84,8 +88,9 @@ export const researchWineInfo = async (query: string): Promise<{ data: WineAnaly
 
     return { data: JSON.parse(response.text || '{}'), sources };
   } catch (error: any) {
-    if (error.message === "API_KEY_MISSING") {
-      throw new Error("请先在 Vercel 环境变量中设置 API_KEY");
+    console.error("Research Error:", error);
+    if (error.message === "API_KEY_NOT_CONFIGURED") {
+      alert("配置错误：请在 Vercel 后台添加 API_KEY 环境变量并重新部署。");
     }
     throw error;
   }
