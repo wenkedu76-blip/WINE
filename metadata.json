@@ -1,0 +1,7 @@
+{
+  "name": "WINE",
+  "description": "An advanced wine tasting assistant that identifies bottles from photos, fetches professional tasting notes via Gemini search grounding, and helps you build a beautiful digital cellar.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
