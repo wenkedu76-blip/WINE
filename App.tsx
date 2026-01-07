@@ -15,11 +15,17 @@ const App: React.FC = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 初始化加载
   useEffect(() => {
-    const saved = localStorage.getItem('sommelier_wines_v2');
-    if (saved) setWines(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('sommelier_wines_v2');
+      if (saved) setWines(JSON.parse(saved));
+    } catch (e) {
+      console.error("Failed to load saved wines", e);
+    }
   }, []);
 
+  // 自动保存
   useEffect(() => {
     localStorage.setItem('sommelier_wines_v2', JSON.stringify(wines));
   }, [wines]);
@@ -28,15 +34,15 @@ const App: React.FC = () => {
     const list = [...wines];
     switch (sortBy) {
       case 'vintage':
-        return list.sort((a, b) => b.vintage.localeCompare(a.vintage));
+        return list.sort((a, b) => (b.vintage || '').localeCompare(a.vintage || ''));
       case 'region':
-        return list.sort((a, b) => a.region.localeCompare(b.region));
+        return list.sort((a, b) => (a.region || '').localeCompare(b.region || ''));
       case 'rating':
         return list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       case 'style':
         return list.sort((a, b) => (a.style || '').localeCompare(b.style || ''));
       default:
-        return list.sort((a, b) => b.createdAt - a.createdAt);
+        return list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     }
   }, [wines, sortBy]);
 
@@ -51,8 +57,9 @@ const App: React.FC = () => {
       try {
         const { data } = await analyzeWineLabel(base64);
         addNewWine(data, base64);
-      } catch (error) {
-        alert("识别失败，请检查 API Key 或尝试手动输入。");
+      } catch (error: any) {
+        console.error(error);
+        // 错误提示已经在 service 里的 alert 处理了
       } finally {
         setLoading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -70,7 +77,7 @@ const App: React.FC = () => {
       setIsSearching(false);
       setSearchQuery('');
     } catch (error) {
-      alert("搜索失败，请检查网络或 API Key。");
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -166,7 +173,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* 底部固定拍照按钮 */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
         <button 
           onClick={() => fileInputRef.current?.click()}
