@@ -24,7 +24,6 @@ const App: React.FC = () => {
     localStorage.setItem('sommelier_wines_v2', JSON.stringify(wines));
   }, [wines]);
 
-  // 排序与分类逻辑
   const sortedAndGroupedWines = useMemo(() => {
     const list = [...wines];
     switch (sortBy) {
@@ -53,9 +52,10 @@ const App: React.FC = () => {
         const { data } = await analyzeWineLabel(base64);
         addNewWine(data, base64);
       } catch (error) {
-        alert("识别失败，请尝试手动输入。");
+        alert("识别失败，请检查 API Key 或尝试手动输入。");
       } finally {
         setLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     };
   };
@@ -70,7 +70,7 @@ const App: React.FC = () => {
       setIsSearching(false);
       setSearchQuery('');
     } catch (error) {
-      alert("搜索失败。");
+      alert("搜索失败，请检查网络或 API Key。");
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 md:px-8 bg-stone-50 min-h-screen">
+    <div className="max-w-6xl mx-auto px-4 py-8 md:px-8 bg-stone-50 min-h-screen pb-24">
       <header className="mb-10">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
@@ -119,25 +119,21 @@ const App: React.FC = () => {
             </div>
             <h1 className="serif text-3xl font-bold">酒闻录 <span className="text-sm font-sans font-normal text-stone-400">Sommelier AI</span></h1>
           </div>
-          <div className="flex gap-2">
-             <button onClick={() => fileInputRef.current?.click()} className="p-3 bg-rose-800 text-white rounded-full shadow-lg"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button>
-             <button onClick={() => setIsSearching(true)} className="p-3 bg-stone-900 text-white rounded-full shadow-lg"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
-          </div>
+          <button onClick={() => setIsSearching(true)} className="p-3 bg-stone-900 text-white rounded-full shadow-lg"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
         </div>
 
-        {/* 分类筛选条 */}
         <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
           {[
-            { id: 'date_added', label: '记录时间' },
-            { id: 'vintage', label: '生产年份' },
-            { id: 'region', label: '产区' },
-            { id: 'style', label: '风格' },
-            { id: 'rating', label: '评分品质' }
+            { id: 'date_added', label: '最近添加' },
+            { id: 'vintage', label: '按年份' },
+            { id: 'region', label: '按产区' },
+            { id: 'style', label: '按风格' },
+            { id: 'rating', label: '按评分' }
           ].map(opt => (
             <button
               key={opt.id}
               onClick={() => setSortBy(opt.id as SortOption)}
-              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${sortBy === opt.id ? 'bg-rose-100 text-rose-900 ring-1 ring-rose-200' : 'bg-white text-stone-500 hover:bg-stone-100'}`}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${sortBy === opt.id ? 'bg-rose-800 text-white shadow-md' : 'bg-white text-stone-500 border border-stone-200'}`}
             >
               {opt.label}
             </button>
@@ -148,8 +144,8 @@ const App: React.FC = () => {
       <main>
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <div className="w-10 h-10 border-4 border-rose-100 border-t-rose-800 rounded-full animate-spin"></div>
-            <p className="text-stone-400 italic">正在调取全球品酒数据库...</p>
+            <div className="w-12 h-12 border-4 border-rose-100 border-t-rose-800 rounded-full animate-spin"></div>
+            <p className="text-stone-500 italic animate-pulse text-sm">正在深度解析酒款信息...</p>
           </div>
         )}
 
@@ -160,26 +156,48 @@ const App: React.FC = () => {
         </div>
 
         {!loading && wines.length === 0 && (
-          <div className="text-center py-24 text-stone-400">
-            <p>还没有记录任何美酒。点击上方按钮开始。</p>
+          <div className="text-center py-32">
+            <div className="w-20 h-20 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300">
+               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+            </div>
+            <p className="text-stone-400 font-medium">您的酒窖还是空的</p>
+            <p className="text-stone-300 text-sm mt-1">拍摄酒标或手动搜索来添加第一瓶酒</p>
           </div>
         )}
       </main>
 
-      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*" />
+      {/* 底部固定拍照按钮 */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-3 px-8 py-4 wine-gradient text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="font-bold tracking-wide">拍照识酒</span>
+        </button>
+      </div>
+
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileUpload} 
+        className="hidden" 
+        accept="image/*" 
+        capture="environment" 
+      />
 
       {isSearching && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl">
-            <h3 className="serif text-2xl mb-6">手动检索酒款</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-950/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="serif text-2xl mb-6">查找酒款信息</h3>
             <form onSubmit={handleManualSearch} className="space-y-4">
               <input 
                 type="text" autoFocus placeholder="输入酒名、年份或产区..."
-                className="w-full text-lg border-2 border-stone-100 rounded-2xl px-6 py-4 focus:border-rose-300 outline-none"
+                className="w-full text-lg border-2 border-stone-100 rounded-2xl px-6 py-4 focus:border-rose-400 outline-none transition-all"
                 value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button type="submit" className="w-full bg-rose-800 text-white py-4 rounded-2xl font-bold">开始探索</button>
-              <button type="button" onClick={() => setIsSearching(false)} className="w-full text-stone-400 py-2">取消</button>
+              <button type="submit" className="w-full bg-stone-900 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-[0.98] transition-all">开始探索</button>
+              <button type="button" onClick={() => setIsSearching(false)} className="w-full text-stone-400 py-2 text-sm">放弃搜索</button>
             </form>
           </div>
         </div>
