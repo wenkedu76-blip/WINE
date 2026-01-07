@@ -2,33 +2,29 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { WineAnalysis } from "../types";
 
-// 延迟初始化，防止在模块加载阶段因为环境变量缺失而崩溃
 const getAI = () => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    // 抛出一个特定的错误，稍后在 UI 层捕获
-    throw new Error("API_KEY_NOT_CONFIGURED");
-  }
+  if (!apiKey) throw new Error("API_KEY_NOT_CONFIGURED");
   return new GoogleGenAI({ apiKey });
 };
 
 const WINE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
-    name: { type: Type.STRING },
-    winery: { type: Type.STRING },
-    varietal: { type: Type.STRING },
-    region: { type: Type.STRING },
-    vintage: { type: Type.STRING },
+    name: { type: Type.STRING, description: "Official name of the wine" },
+    winery: { type: Type.STRING, description: "Name of the winery or producer" },
+    varietal: { type: Type.STRING, description: "Grape variety or blend" },
+    region: { type: Type.STRING, description: "Wine region and country" },
+    vintage: { type: Type.STRING, description: "Vintage year, use N/V for non-vintage" },
     style: { type: Type.STRING, description: "One of: Red, White, Rosé, Sparkling, Sweet, Fortified" },
-    summary: { type: Type.STRING, description: "Professional tasting notes and flavor profile summary." },
+    summary: { type: Type.STRING, description: "Professional tasting notes and flavor profile summary in Chinese." },
     characteristics: {
       type: Type.OBJECT,
       properties: {
-        body: { type: Type.INTEGER },
-        tannin: { type: Type.INTEGER },
-        acidity: { type: Type.INTEGER },
-        sweetness: { type: Type.INTEGER },
+        body: { type: Type.INTEGER, description: "1-5 scale" },
+        tannin: { type: Type.INTEGER, description: "1-5 scale" },
+        acidity: { type: Type.INTEGER, description: "1-5 scale" },
+        sweetness: { type: Type.INTEGER, description: "1-5 scale" },
       },
       required: ["body", "tannin", "acidity", "sweetness"]
     }
@@ -37,61 +33,43 @@ const WINE_SCHEMA = {
 };
 
 export const analyzeWineLabel = async (base64Image: string): Promise<{ data: WineAnalysis }> => {
-  try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [
-        {
-          parts: [
-            { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
-            { text: "Identify this wine. Return JSON including style (Red/White/etc) and taste summary. Use Search to be accurate." }
-          ]
-        }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: WINE_SCHEMA,
-        tools: [{ googleSearch: {} }]
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: [
+      {
+        parts: [
+          { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
+          { text: "Identify this wine label accurately. Use Google Search to find professional tasting notes and details. Respond in Chinese." }
+        ]
       }
-    });
-
-    return { data: JSON.parse(response.text || '{}') };
-  } catch (error: any) {
-    console.error("Wine Analysis Error:", error);
-    if (error.message === "API_KEY_NOT_CONFIGURED") {
-      alert("配置错误：请在 Vercel 后台添加 API_KEY 环境变量并重新部署。");
-    } else {
-      alert("分析失败，请稍后重试。");
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: WINE_SCHEMA,
+      tools: [{ googleSearch: {} }]
     }
-    throw error;
-  }
+  });
+
+  return { data: JSON.parse(response.text || '{}') };
 };
 
 export const researchWineInfo = async (query: string): Promise<{ data: WineAnalysis, sources: any[] }> => {
-  try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Detailed research for: ${query}. Include winery, region, vintage, professional tasting notes and style category.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: WINE_SCHEMA,
-        tools: [{ googleSearch: {} }]
-      }
-    });
-
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-      title: chunk.web?.title,
-      uri: chunk.web?.uri
-    })).filter((s: any) => s.uri) || [];
-
-    return { data: JSON.parse(response.text || '{}'), sources };
-  } catch (error: any) {
-    console.error("Research Error:", error);
-    if (error.message === "API_KEY_NOT_CONFIGURED") {
-      alert("配置错误：请在 Vercel 后台添加 API_KEY 环境变量并重新部署。");
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Conduct deep research for this wine: "${query}". Identify winery, region, varietal, and provide professional tasting notes in Chinese.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: WINE_SCHEMA,
+      tools: [{ googleSearch: {} }]
     }
-    throw error;
-  }
+  });
+
+  const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
+    title: chunk.web?.title,
+    uri: chunk.web?.uri
+  })).filter((s: any) => s.uri) || [];
+
+  return { data: JSON.parse(response.text || '{}'), sources };
 };

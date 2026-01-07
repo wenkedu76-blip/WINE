@@ -6,7 +6,7 @@ export interface WineNote {
   varietal: string;
   region: string;
   vintage: string;
-  tastingNotes: string; // AI 抓取的笔记
+  tastingNotes: string; // AI 抓取的专业笔记
   userNotes?: string;   // 用户自己的记录
   rating?: number;      // 1-5 星
   style?: string;       // 风格分类：红、白、起泡等

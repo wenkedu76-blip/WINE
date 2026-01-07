@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>酒闻录 Sommelier AI</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#881337">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
@@ -22,7 +22,7 @@
             background: white;
             z-index: 9999;
             padding: 20px;
-            color: red;
+            color: #881337;
             font-family: monospace;
             overflow: auto;
         }
@@ -43,23 +43,25 @@
 <body class="bg-stone-50 text-stone-900 min-h-screen">
     <div id="root"></div>
     <div id="error-overlay">
-        <h2>应用启动失败</h2>
-        <div id="error-content"></div>
-        <p style="color: gray; margin-top: 20px;">请尝试刷新页面，或检查 Vercel 环境变量 API_KEY 是否配置。</p>
+        <h2 style="font-size: 20px; font-weight: bold;">应用启动异常</h2>
+        <pre id="error-content" style="background: #fff5f5; padding: 10px; border-radius: 8px; margin-top: 10px; white-space: pre-wrap; font-size: 12px;"></pre>
+        <p style="color: #666; margin-top: 20px; font-size: 14px;">排查建议：<br>1. 检查环境变量 API_KEY 是否配置<br>2. 确保网络可以访问 esm.sh<br>3. 尝试清除浏览器缓存并刷新</p>
     </div>
 
     <script>
-        // 全局错误捕获，防止白屏死机
         window.onerror = function(msg, url, lineNo, columnNo, error) {
             const overlay = document.getElementById('error-overlay');
             const content = document.getElementById('error-content');
             if (overlay && content) {
                 overlay.style.display = 'block';
-                content.innerText = msg + '\nat ' + url + ':' + lineNo;
+                content.innerText = msg + '\n位置: ' + url + ':' + lineNo + ':' + columnNo + (error ? '\n详情: ' + error.stack : '');
             }
             return false;
         };
     </script>
-    <script type="module" src="index.tsx"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module" src="App.tsx"></script>
+    <script type="text/babel" data-type="module" src="index.tsx"></script>
 </body>
 </html>

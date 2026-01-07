@@ -1,6 +1,6 @@
 {
-  "name": "WINE",
-  "description": "An advanced wine tasting assistant that identifies bottles from photos, fetches professional tasting notes via Gemini search grounding, and helps you build a beautiful digital cellar.",
+  "name": "酒闻录 Sommelier AI",
+  "description": "专业的葡萄酒品鉴与收藏助手，通过 AI 识别酒标并补全专业笔记。",
   "requestFramePermissions": [
     "camera"
   ]

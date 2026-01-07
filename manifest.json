@@ -2,14 +2,7 @@
 {
   "short_name": "酒闻录",
   "name": "酒闻录 Sommelier AI",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/763/763007.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#881337",
   "background_color": "#fafaf9"
